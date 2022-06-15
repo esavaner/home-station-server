@@ -1,6 +1,8 @@
 import fs from "fs";
 import { newUid } from "./utils.js";
 import { W1_PATH, TEMP_MODES } from "./consts.js";
+import { log } from "./logger.js";
+import { Gpio } from "onoff";
 
 const options = {
   encoding: "utf-8",
@@ -24,7 +26,7 @@ class DB {
     }
   }
 
-  append(data) {
+  appendHistory(data) {
     this.history.push(data);
     if (this.history.length >= this.maxlen) {
       this.history.shift();
@@ -37,7 +39,7 @@ class DB {
   }
 
   getHistoryString() {
-    return JSON.stringify(this.history);
+    return JSON.stringify({ history: this.history });
   }
 
   save() {
@@ -60,6 +62,13 @@ class DB {
     const index = this.windows.findIndex((win) => (window.uid = win.uid));
     this.windows.splice(index, 1);
     this.save();
+  }
+
+  readWindows() {
+    return this.windows.map((win) => {
+      const windowPin = new Gpio(win.pin, "in");
+      return windowPin.readSync();
+    });
   }
 
   readSensors() {
@@ -89,6 +98,14 @@ class DB {
     });
 
     return temps;
+  }
+
+  hourlyRead() {
+    log("hourly read");
+    this.appendHistory({
+      time: Date.now(),
+      sensors: this.readTemps(),
+    });
   }
 }
 
