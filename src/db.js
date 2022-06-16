@@ -1,5 +1,4 @@
 import fs from "fs";
-import { newUid } from "./utils.js";
 import { W1_PATH, TEMP_MODES } from "./consts.js";
 import { log } from "./logger.js";
 import { Gpio } from "onoff";
@@ -38,28 +37,23 @@ class DB {
     return this.history;
   }
 
-  getHistoryString() {
-    return JSON.stringify({ history: this.history });
-  }
-
   save() {
     fs.writeFileSync(this.filename, JSON.stringify(this));
   }
 
   addWindow(pin) {
-    const uid = newUid(this.windows);
-    this.windows.push({ uid, pin });
+    this.windows.push({ pin });
     this.save();
   }
 
   updateWindow(window) {
-    const index = this.windows.findIndex((win) => (window.uid = win.uid));
+    const index = this.windows.findIndex((win) => (window.pin = win.pin));
     this.windows[index] = window;
     this.save();
   }
 
   deleteWindow(window) {
-    const index = this.windows.findIndex((win) => (window.uid = win.uid));
+    const index = this.windows.findIndex((win) => (window.pin = win.pin));
     this.windows.splice(index, 1);
     this.save();
   }
@@ -67,7 +61,10 @@ class DB {
   readWindows() {
     return this.windows.map((win) => {
       const windowPin = new Gpio(win.pin, "in");
-      return windowPin.readSync();
+      return {
+        pin: win.pin,
+        isOpen: windowPin.readSync(),
+      };
     });
   }
 
@@ -75,10 +72,10 @@ class DB {
     const dirs = fs.readdirSync(W1_PATH);
     for (let dir of dirs) {
       if (!dir.startsWith("28-")) continue;
-      if (this.sensors.find((el) => el.name === dir)) continue;
+      if (this.sensors.find((el) => el.id === dir)) continue;
 
       this.sensors.push({
-        name: dir,
+        id: dir,
         mode: TEMP_MODES.IN,
       });
     }
@@ -89,10 +86,10 @@ class DB {
     if (this.sensors.length === 0) this.readSensors();
 
     const temps = this.sensors.map((sensor) => {
-      const w1 = fs.readFileSync(`${W1_PATH}/${sensor.name}/w1_slave`, options);
+      const w1 = fs.readFileSync(`${W1_PATH}/${sensor.id}/w1_slave`, options);
       const temp = parseInt(w1.split("t=")[1].replace("\n", "")) / 1000;
       return {
-        sensor: sensor.name,
+        id: sensor.id,
         temp,
       };
     });
@@ -100,12 +97,17 @@ class DB {
     return temps;
   }
 
-  hourlyRead() {
-    log("hourly read");
-    this.appendHistory({
+  getStatus() {
+    return {
       time: Date.now(),
       sensors: this.readTemps(),
-    });
+      windows: this.readWindows(),
+    };
+  }
+
+  hourlyRead() {
+    log("hourly read");
+    this.appendHistory(this.getStatus());
   }
 }
 

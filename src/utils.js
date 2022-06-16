@@ -10,9 +10,13 @@ export const debounce = (fn) => {
   }
 };
 
-export const newUid = (arr) => {
-  return (arr.length > 0 ? Math.max(arr.map((item) => item.uid)) : 0) + 1;
+export const stringResponse = (response) => {
+  return JSON.stringify({ data: response });
 };
+
+// export const newUid = (arr) => {
+//   return (arr.length > 0 ? Math.max(arr.map((item) => item.uid)) : 0) + 1;
+// };
 
 export const setUpInterval = (db) => {
   const intv = setInterval(() => db.hourlyRead(), 60 * 60 * 1000);

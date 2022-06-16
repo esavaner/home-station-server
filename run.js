@@ -2,7 +2,7 @@ import express from "express";
 import DB from "./src/db.js";
 import { PORT, DB_FILE, MAX_LENGTH } from "./src/consts.js";
 import { log } from "./src/logger.js";
-import { setupTimer } from "./src/utils.js";
+import { setupTimer, stringResponse } from "./src/utils.js";
 
 const db = new DB(DB_FILE, MAX_LENGTH);
 const app = express();
@@ -15,17 +15,12 @@ app.get("/", (req, res) => {
 
 app.get("/history", (req, res) => {
   log("read history");
-  res.send(db.getHistoryString());
+  res.send(stringResponse(db.getHistory()));
 });
 
-app.get("/temps", (req, res) => {
-  log("read temps");
-  res.send(
-    JSON.stringify({
-      date: Date.now(),
-      temps: db.readTemps(),
-    })
-  );
+app.get("/status", (req, res) => {
+  log("read status");
+  res.send(stringResponse(db.getStatus()));
 });
 
 app.listen(PORT, () => {
