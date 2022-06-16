@@ -1,13 +1,27 @@
 import express from "express";
 import DB from "./src/db.js";
-import { PORT, DB_FILE, MAX_LENGTH } from "./src/consts.js";
+import { PORT, DB_FILE, MAX_LENGTH, DEFAULT_CLIENT } from "./src/consts.js";
 import { log } from "./src/logger.js";
 import { setupTimer, stringResponse } from "./src/utils.js";
+import { client_urls } from "./config.js";
 
 const db = new DB(DB_FILE, MAX_LENGTH);
 const app = express();
 
 setupTimer(db);
+
+app.use((req, res, next) => {
+  const origin = client_urls.includes(req.headers.origin)
+    ? req.headers.origin
+    : DEFAULT_CLIENT;
+
+  res.header("Access-Control-Allow-Origin", origin);
+  res.header(
+    "Access-Control-Allow-Headers",
+    "Origin, X-Requested-With, Content-Type, Accept"
+  );
+  next();
+});
 
 app.get("/", (req, res) => {
   res.redirect("/history");
