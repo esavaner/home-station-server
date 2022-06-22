@@ -1,11 +1,8 @@
 import fs from "fs";
-import { W1_PATH, PIN_MODES } from "./consts.js";
-import { log } from "./utils.js";
+import { W1_PATH, PIN_MODES } from "./consts";
+import { log } from "./utils";
 import { Gpio } from "onoff";
-
-const options = {
-  encoding: "utf-8",
-};
+import { OneWire, Sensor } from "./db.model";
 
 const DEFAULT_DB = {
   history: [],
@@ -14,18 +11,29 @@ const DEFAULT_DB = {
 };
 
 class DB {
-  constructor(filename, maxlen) {
+  filename: any;
+  maxlen: any;
+  history: any[] = [];
+  sensors: Sensor[] = [];
+  onewires: OneWire[] = [];
+  constructor(filename: string, maxlen: number) {
     this.filename = filename;
     this.maxlen = maxlen;
     try {
-      Object.assign(this, JSON.parse(fs.readFileSync(this.filename, options)));
+      Object.assign(
+        this,
+        JSON.parse(fs.readFileSync(this.filename, { encoding: "utf-8" }))
+      );
     } catch (e) {
       fs.writeFileSync(filename, JSON.stringify(DEFAULT_DB));
-      Object.assign(this, JSON.parse(fs.readFileSync(this.filename, options)));
+      Object.assign(
+        this,
+        JSON.parse(fs.readFileSync(this.filename, { encoding: "utf-8" }))
+      );
     }
   }
 
-  appendHistory(data) {
+  appendHistory(data: any) {
     this.history.push(data);
     if (this.history.length >= this.maxlen) {
       this.history.shift();
@@ -41,25 +49,25 @@ class DB {
     fs.writeFileSync(this.filename, JSON.stringify(this));
   }
 
-  addSensor(sensor) {
-    this.sensors.push({ sensor });
+  addSensor(sensor: Sensor) {
+    this.sensors.push(sensor);
     this.save();
   }
 
-  updateSensor(sensor) {
+  updateSensor(sensor: Sensor) {
     const index = this.sensors.findIndex((sens) => (sensor.pin = sens.pin));
     this.sensors[index] = sensor;
     this.save();
   }
 
-  deleteSensor(sensor) {
+  deleteSensor(sensor: Sensor) {
     const index = this.sensors.findIndex((sens) => (sensor.pin = sens.pin));
     this.sensors.splice(index, 1);
     this.save();
   }
 
   readSensors() {
-    return this.sensors.map((sens) => {
+    return this.sensors.map((sens: Sensor) => {
       const sensorPin = new Gpio(sens.pin, "in");
       return {
         ...sens,
@@ -87,7 +95,9 @@ class DB {
 
     const temps = this.onewires.map((wire) => {
       try {
-        const w1 = fs.readFileSync(`${W1_PATH}/${wire.id}/w1_slave`, options);
+        const w1 = fs.readFileSync(`${W1_PATH}/${wire.id}/w1_slave`, {
+          encoding: "utf-8",
+        });
         const temp = parseInt(w1.split("t=")[1].replace("\n", "")) / 1000;
         return {
           ...wire,

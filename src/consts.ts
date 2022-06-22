@@ -5,10 +5,10 @@ const W1_PATH = "/sys/bus/w1/devices";
 const DEFAULT_CLIENT = "http://localhost:3000";
 const OPEN_WEATHER_URL = "https://api.openweathermap.org/data/3.0";
 
-const PIN_MODES = {
-  WINDOW: "window",
-  RAIN: "rain",
-};
+enum PIN_MODES {
+  WINDOW = "window",
+  RAIN = "rain",
+}
 
 export {
   PORT,

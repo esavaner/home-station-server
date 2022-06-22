@@ -1,8 +1,8 @@
 import express from "express";
-import DB from "./src/db.js";
-import { PORT, DB_FILE, MAX_LENGTH, DEFAULT_CLIENT } from "./src/consts.js";
-import { log } from "./src/utils.js";
-import { setupConfig, setupTimer, stringResponse } from "./src/utils.js";
+import DB from "./db";
+import { PORT, DB_FILE, MAX_LENGTH, DEFAULT_CLIENT } from "./consts";
+import { log } from "./utils";
+import { setupConfig, setupTimer, stringResponse } from "./utils";
 
 const db = new DB(DB_FILE, MAX_LENGTH);
 const app = express();
@@ -38,7 +38,7 @@ app.get("/status", (req, res) => {
 });
 
 app.get("/onecall", (req, res) => {
-  res.send(stringResponse(call()));
+  res.send(stringResponse(""));
 });
 
 app.listen(PORT, () => {
