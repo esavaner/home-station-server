@@ -1,6 +1,5 @@
-//import { config } from "../utils.js";
-import { instance } from "./config.js";
-import { setupConfig } from "../utils.js";
+import { instance } from "./config";
+import { setupConfig } from "../utils";
 
 const config = setupConfig("../../config.json");
 
@@ -16,7 +15,8 @@ const getOneCall = () =>
     .catch((e) => console.log(e));
 
 async function f() {
-  await getOneCall();
+  const t = await getOneCall();
+  console.log(t);
 }
 
 f();

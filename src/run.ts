@@ -1,10 +1,10 @@
 import express from "express";
 import DB from "./db";
-import { PORT, DB_FILE, MAX_LENGTH, DEFAULT_CLIENT } from "./consts";
+import { PORT, DB_FILE, DEFAULT_CLIENT } from "./consts";
 import { log } from "./utils";
 import { setupConfig, setupTimer, stringResponse } from "./utils";
 
-const db = new DB(DB_FILE, MAX_LENGTH);
+const db = new DB(DB_FILE);
 const app = express();
 const config = setupConfig("./config.json");
 
@@ -29,7 +29,7 @@ app.get("/", (req, res) => {
 
 app.get("/history", (req, res) => {
   log("read history");
-  res.send(stringResponse(db.getHistory()));
+  // res.send(stringResponse(db.getHistory()));
 });
 
 app.get("/status", (req, res) => {

@@ -1,24 +1,35 @@
 import fs from "fs";
-import { W1_PATH, PIN_MODES } from "./consts";
-import { log } from "./utils";
+import {
+  W1_PATH,
+  PIN_MODES,
+  STATUS_THROTTLE,
+  ONECALL_THROTTLE,
+} from "./consts";
 import { Gpio } from "onoff";
-import { OneWire, Sensor } from "./db.model";
+import {
+  OneCallModel,
+  OneWire,
+  OneWireRead,
+  Sensor,
+  SensorRead,
+  StatusModel,
+} from "./db.model";
 
 const DEFAULT_DB = {
-  history: [],
+  statusHistory: [],
+  onecallHistort: [],
   sensors: [],
   onewires: [],
 };
 
 class DB {
-  filename: any;
-  maxlen: any;
-  history: any[] = [];
+  filename: string;
+  statusHistory: StatusModel[] = [];
+  onecallHistory: OneCallModel[] = [];
   sensors: Sensor[] = [];
   onewires: OneWire[] = [];
-  constructor(filename: string, maxlen: number) {
+  constructor(filename: string) {
     this.filename = filename;
-    this.maxlen = maxlen;
     try {
       Object.assign(
         this,
@@ -33,16 +44,28 @@ class DB {
     }
   }
 
-  appendHistory(data: any) {
-    this.history.push(data);
-    if (this.history.length >= this.maxlen) {
-      this.history.shift();
+  appendStatusHistory(data: StatusModel) {
+    this.statusHistory.push(data);
+    if (this.statusHistory.length > 1) {
+      this.statusHistory.shift();
     }
     this.save();
   }
 
-  getHistory() {
-    return this.history;
+  appendOnecallHistory(data: OneCallModel) {
+    this.onecallHistory.push(data);
+    if (this.onecallHistory.length > 1) {
+      this.onecallHistory.shift();
+    }
+    this.save();
+  }
+
+  getStatusHistory() {
+    return this.statusHistory;
+  }
+
+  getOnecallHistory() {
+    return this.onecallHistory;
   }
 
   save() {
@@ -66,17 +89,17 @@ class DB {
     this.save();
   }
 
-  readSensors() {
+  readSensors(): SensorRead[] {
     return this.sensors.map((sens: Sensor) => {
       const sensorPin = new Gpio(sens.pin, "in");
       return {
         ...sens,
-        isOn: sensorPin.readSync(),
+        isOn: Boolean(sensorPin.readSync()),
       };
     });
   }
 
-  readOneWires() {
+  setOneWires(): void {
     const dirs = fs.readdirSync(W1_PATH);
     for (let dir of dirs) {
       if (!dir.startsWith("28-")) continue;
@@ -90,8 +113,8 @@ class DB {
     this.save();
   }
 
-  readTemps() {
-    if (this.onewires.length === 0) this.readOneWires();
+  readOneWires(): OneWireRead[] {
+    if (this.onewires.length === 0) this.setOneWires();
 
     const temps = this.onewires.map((wire) => {
       try {
@@ -114,17 +137,34 @@ class DB {
     return temps;
   }
 
-  getStatus() {
-    return {
-      time: Date.now(),
-      sensors: this.readSensors(),
-      onewires: this.readTemps(),
-    };
+  getStatus(): StatusModel[] {
+    const now = Date.now();
+    if (
+      this.statusHistory.length === 0 ||
+      now - this.statusHistory[0].time > STATUS_THROTTLE
+    ) {
+      this.appendStatusHistory({
+        time: now,
+        sensors: this.readSensors(),
+        onewires: this.readOneWires(),
+      });
+    }
+    return this.getStatusHistory();
   }
 
-  hourlyRead() {
-    log("hourly read");
-    this.appendHistory(this.getStatus());
+  async getOneCall(): Promise<OneCallModel> {
+    const now = Date.now();
+    if (
+      this.onecallHistory.length === 0 ||
+      now - this.onecallHistory[0].time > ONECALL_THROTTLE
+    ) {
+      // this.appendStatusHistory({
+      //   time: now,
+      //   sensors: this.readSensors(),
+      //   onewires: this.readOneWires(),
+      // });
+    }
+    return this.getOnecallHistory();
   }
 }
 
