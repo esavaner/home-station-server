@@ -1,17 +1,17 @@
 import express from "express";
 import DB from "./src/db.js";
 import { PORT, DB_FILE, MAX_LENGTH, DEFAULT_CLIENT } from "./src/consts.js";
-import { log } from "./src/logger.js";
-import { setupTimer, stringResponse } from "./src/utils.js";
-import { client_urls } from "./config.js";
+import { log } from "./src/utils.js";
+import { setupConfig, setupTimer, stringResponse } from "./src/utils.js";
 
 const db = new DB(DB_FILE, MAX_LENGTH);
 const app = express();
+const config = setupConfig("./config.json");
 
 setupTimer(db);
 
 app.use((req, res, next) => {
-  const origin = client_urls.includes(req.headers.origin)
+  const origin = config.client_urls.includes(req.headers.origin)
     ? req.headers.origin
     : DEFAULT_CLIENT;
 
@@ -35,6 +35,10 @@ app.get("/history", (req, res) => {
 app.get("/status", (req, res) => {
   log("read status");
   res.send(stringResponse(db.getStatus()));
+});
+
+app.get("/onecall", (req, res) => {
+  res.send(stringResponse(call()));
 });
 
 app.listen(PORT, () => {

@@ -1,6 +1,6 @@
 import fs from "fs";
-import { W1_PATH, TEMP_MODES } from "./consts.js";
-import { log } from "./logger.js";
+import { W1_PATH, PIN_MODES } from "./consts.js";
+import { log } from "./utils.js";
 import { Gpio } from "onoff";
 
 const options = {
@@ -10,7 +10,7 @@ const options = {
 const DEFAULT_DB = {
   history: [],
   sensors: [],
-  windows: [],
+  onewires: [],
 };
 
 class DB {
@@ -41,57 +41,64 @@ class DB {
     fs.writeFileSync(this.filename, JSON.stringify(this));
   }
 
-  addWindow(pin) {
-    this.windows.push({ pin });
+  addSensor(sensor) {
+    this.sensors.push({ sensor });
     this.save();
   }
 
-  updateWindow(window) {
-    const index = this.windows.findIndex((win) => (window.pin = win.pin));
-    this.windows[index] = window;
+  updateSensor(sensor) {
+    const index = this.sensors.findIndex((sens) => (sensor.pin = sens.pin));
+    this.sensors[index] = sensor;
     this.save();
   }
 
-  deleteWindow(window) {
-    const index = this.windows.findIndex((win) => (window.pin = win.pin));
-    this.windows.splice(index, 1);
+  deleteSensor(sensor) {
+    const index = this.sensors.findIndex((sens) => (sensor.pin = sens.pin));
+    this.sensors.splice(index, 1);
     this.save();
   }
 
-  readWindows() {
-    return this.windows.map((win) => {
-      const windowPin = new Gpio(win.pin, "in");
+  readSensors() {
+    return this.sensors.map((sens) => {
+      const sensorPin = new Gpio(sens.pin, "in");
       return {
-        pin: win.pin,
-        isOpen: windowPin.readSync(),
+        ...sens,
+        isOn: sensorPin.readSync(),
       };
     });
   }
 
-  readSensors() {
+  readOneWires() {
     const dirs = fs.readdirSync(W1_PATH);
     for (let dir of dirs) {
       if (!dir.startsWith("28-")) continue;
-      if (this.sensors.find((el) => el.id === dir)) continue;
+      if (this.onewires.find((el) => el.id === dir)) continue;
 
-      this.sensors.push({
+      this.onewires.push({
         id: dir,
-        mode: TEMP_MODES.IN,
+        description: "",
       });
     }
     this.save();
   }
 
   readTemps() {
-    if (this.sensors.length === 0) this.readSensors();
+    if (this.onewires.length === 0) this.readOneWires();
 
-    const temps = this.sensors.map((sensor) => {
-      const w1 = fs.readFileSync(`${W1_PATH}/${sensor.id}/w1_slave`, options);
-      const temp = parseInt(w1.split("t=")[1].replace("\n", "")) / 1000;
-      return {
-        id: sensor.id,
-        temp,
-      };
+    const temps = this.onewires.map((wire) => {
+      try {
+        const w1 = fs.readFileSync(`${W1_PATH}/${wire.id}/w1_slave`, options);
+        const temp = parseInt(w1.split("t=")[1].replace("\n", "")) / 1000;
+        return {
+          ...wire,
+          temp,
+        };
+      } catch (e) {
+        return {
+          ...wire,
+          temp: null,
+        };
+      }
     });
 
     return temps;
@@ -100,8 +107,8 @@ class DB {
   getStatus() {
     return {
       time: Date.now(),
-      sensors: this.readTemps(),
-      windows: this.readWindows(),
+      sensors: this.readSensors(),
+      onewires: this.readTemps(),
     };
   }
 
