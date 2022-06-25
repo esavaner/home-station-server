@@ -7,17 +7,19 @@ import {
 } from "./consts";
 import { Gpio } from "onoff";
 import {
-  OneCallModel,
   OneWire,
   OneWireRead,
   Sensor,
   SensorRead,
   StatusModel,
 } from "./db.model";
+import { getOneCall, getOneCallMock } from "./api/onecall";
+import { log } from "./utils";
+import { OneCallModel } from "./api/onecall.model";
 
 const DEFAULT_DB = {
   statusHistory: [],
-  onecallHistort: [],
+  oneCallHistort: [],
   sensors: [],
   onewires: [],
 };
@@ -25,7 +27,7 @@ const DEFAULT_DB = {
 class DB {
   filename: string;
   statusHistory: StatusModel[] = [];
-  onecallHistory: OneCallModel[] = [];
+  oneCallHistory: OneCallModel[] = [];
   sensors: Sensor[] = [];
   onewires: OneWire[] = [];
   constructor(filename: string) {
@@ -53,9 +55,9 @@ class DB {
   }
 
   appendOnecallHistory(data: OneCallModel) {
-    this.onecallHistory.push(data);
-    if (this.onecallHistory.length > 1) {
-      this.onecallHistory.shift();
+    this.oneCallHistory.push(data);
+    if (this.oneCallHistory.length > 1) {
+      this.oneCallHistory.shift();
     }
     this.save();
   }
@@ -64,8 +66,8 @@ class DB {
     return this.statusHistory;
   }
 
-  getOnecallHistory() {
-    return this.onecallHistory;
+  getOneCallHistory() {
+    return this.oneCallHistory;
   }
 
   save() {
@@ -152,19 +154,17 @@ class DB {
     return this.getStatusHistory();
   }
 
-  async getOneCall(): Promise<OneCallModel> {
+  async getOneCall(): Promise<OneCallModel[]> {
     const now = Date.now();
     if (
-      this.onecallHistory.length === 0 ||
-      now - this.onecallHistory[0].time > ONECALL_THROTTLE
+      this.oneCallHistory.length === 0 ||
+      now - this.oneCallHistory[0].current.dt * 1000 > ONECALL_THROTTLE
     ) {
-      // this.appendStatusHistory({
-      //   time: now,
-      //   sensors: this.readSensors(),
-      //   onewires: this.readOneWires(),
-      // });
+      log("reset onecall");
+      const oneCall = await getOneCall();
+      this.appendOnecallHistory(oneCall);
     }
-    return this.getOnecallHistory();
+    return this.getOneCallHistory();
   }
 }
 

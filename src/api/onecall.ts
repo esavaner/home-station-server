@@ -1,22 +1,22 @@
 import { instance } from "./config";
 import { setupConfig } from "../utils";
+import { onecallexample } from "./onecallmock";
+import { OneCallModel } from "./onecall.model";
 
-const config = setupConfig("../../config.json");
+const config = setupConfig("./config.json");
 
-const getOneCall = () =>
+export const getOneCall = () =>
   instance
-    .get("/onecall", {
+    .get<OneCallModel>("/onecall", {
       params: {
         lat: 51.06,
         lon: 16.97,
         appid: config.open_weather_key,
       },
     })
-    .catch((e) => console.log(e));
+    .then(({ data }) => data);
 
-async function f() {
-  const t = await getOneCall();
-  console.log(t);
-}
-
-f();
+export const getOneCallMock = async () => {
+  await Promise.resolve(() => setTimeout(() => null, 1000));
+  return Promise.resolve(onecallexample);
+};

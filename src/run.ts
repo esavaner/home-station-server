@@ -8,7 +8,7 @@ const db = new DB(DB_FILE);
 const app = express();
 const config = setupConfig("./config.json");
 
-setupTimer(db);
+// setupTimer(db);
 
 app.use((req, res, next) => {
   const origin = config.client_urls.includes(req.headers.origin)
@@ -27,18 +27,16 @@ app.get("/", (req, res) => {
   res.redirect("/history");
 });
 
-app.get("/history", (req, res) => {
-  log("read history");
-  // res.send(stringResponse(db.getHistory()));
-});
-
 app.get("/status", (req, res) => {
   log("read status");
-  res.send(stringResponse(db.getStatus()));
+  const st = db.getStatus();
+  res.send(stringResponse(st.length > 0 ? st[0] : {}));
 });
 
-app.get("/onecall", (req, res) => {
-  res.send(stringResponse(""));
+app.get("/onecall", async (req, res) => {
+  log("read onecall");
+  const oc = await db.getOneCall();
+  res.send(stringResponse(oc.length > 0 ? oc[0] : {}));
 });
 
 app.listen(PORT, () => {

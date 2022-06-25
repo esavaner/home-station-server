@@ -21,5 +21,3 @@ export type StatusModel = {
   sensors: SensorRead[];
   onewires: OneWireRead[];
 };
-
-export type OneCallModel = any;
