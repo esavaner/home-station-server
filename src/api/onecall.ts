@@ -12,6 +12,7 @@ export const getOneCall = () =>
         lat: 51.06,
         lon: 16.97,
         appid: config.open_weather_key,
+        units: config.units,
       },
     })
     .then(({ data }) => data);

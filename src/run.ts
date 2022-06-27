@@ -39,6 +39,12 @@ app.get("/onecall", async (req, res) => {
   res.send(stringResponse(oc.length > 0 ? oc[0] : {}));
 });
 
+app.post("/add_sensor", (req, res) => {
+  const sensor = req.body.sensor;
+  console.log(sensor);
+  res.send(200);
+});
+
 app.listen(PORT, () => {
   log(`Running on port ${PORT}`);
 });

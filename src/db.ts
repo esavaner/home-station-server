@@ -76,6 +76,8 @@ class DB {
 
   addSensor(sensor: Sensor) {
     this.sensors.push(sensor);
+    const sens = new Gpio(sensor.pin, "in");
+    sens.writeSync(1);
     this.save();
   }
 
@@ -88,7 +90,13 @@ class DB {
   deleteSensor(sensor: Sensor) {
     const index = this.sensors.findIndex((sens) => (sensor.pin = sens.pin));
     this.sensors.splice(index, 1);
+    this.clearSensor(sensor.pin);
     this.save();
+  }
+
+  clearSensor(pin: number) {
+    const sens = new Gpio(pin, "in");
+    sens.writeSync(0);
   }
 
   readSensors(): SensorRead[] {
@@ -103,13 +111,13 @@ class DB {
 
   setOneWires(): void {
     const dirs = fs.readdirSync(W1_PATH);
-    for (let dir of dirs) {
+    for (let [index, dir] of Object.entries(dirs)) {
       if (!dir.startsWith("28-")) continue;
       if (this.onewires.find((el) => el.id === dir)) continue;
 
       this.onewires.push({
         id: dir,
-        description: "",
+        description: `One Wire ${index}`,
       });
     }
     this.save();
