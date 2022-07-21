@@ -21,3 +21,9 @@ export type StatusModel = {
   sensors: SensorRead[];
   onewires: OneWireRead[];
 };
+
+export type Location = {
+  name: string;
+  lat: number;
+  lon: number;
+};

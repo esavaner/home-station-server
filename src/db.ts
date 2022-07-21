@@ -7,6 +7,7 @@ import {
 } from "./consts";
 import { Gpio } from "onoff";
 import {
+  Location,
   OneWire,
   OneWireRead,
   Sensor,
@@ -19,9 +20,10 @@ import { OneCallModel } from "./api/onecall.model";
 
 const DEFAULT_DB = {
   statusHistory: [],
-  oneCallHistort: [],
+  oneCallHistory: [],
   sensors: [],
   onewires: [],
+  location: null,
 };
 
 class DB {
@@ -30,6 +32,7 @@ class DB {
   oneCallHistory: OneCallModel[] = [];
   sensors: Sensor[] = [];
   onewires: OneWire[] = [];
+  location: Location | undefined = undefined;
   constructor(filename: string) {
     this.filename = filename;
     try {
@@ -91,6 +94,16 @@ class DB {
     const index = this.sensors.findIndex((sens) => (sensor.pin = sens.pin));
     this.sensors.splice(index, 1);
     this.clearSensor(sensor.pin);
+    this.save();
+  }
+
+  setLocation(loc: Location) {
+    this.location = loc;
+    this.save();
+  }
+
+  clearLocation() {
+    this.location = undefined;
     this.save();
   }
 
@@ -169,10 +182,14 @@ class DB {
       now - this.oneCallHistory[0].current.dt * 1000 > ONECALL_THROTTLE
     ) {
       log("reset onecall");
-      const oneCall = await getOneCall();
+      const oneCall = await getOneCall(this.location);
       this.appendOnecallHistory(oneCall);
     }
     return this.getOneCallHistory();
+  }
+
+  getLocation() {
+    return this.location;
   }
 }
 

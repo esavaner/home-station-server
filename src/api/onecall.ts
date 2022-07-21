@@ -2,15 +2,15 @@ import { instance } from "./config";
 import { setupConfig } from "../utils";
 import { onecallexample } from "./onecallmock";
 import { OneCallModel } from "./onecall.model";
+import { Location } from "../db.model";
 
 const config = setupConfig("./config.json");
-
-export const getOneCall = () =>
+export const getOneCall = (loc?: Location) =>
   instance
     .get<OneCallModel>("/onecall", {
       params: {
-        lat: 51.06,
-        lon: 16.97,
+        lat: loc ? loc.lat : 51.06,
+        lon: loc ? loc.lon : 16.97,
         appid: config.open_weather_key,
         units: config.units,
       },

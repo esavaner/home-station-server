@@ -9,6 +9,7 @@ const app = express();
 const config = setupConfig("./config.json");
 
 // setupTimer(db);
+app.use(express.json());
 
 app.use((req, res, next) => {
   const origin = config.client_urls.includes(req.headers.origin)
@@ -42,6 +43,18 @@ app.get("/onecall", async (req, res) => {
 app.post("/add_sensor", (req, res) => {
   const sensor = req.body.sensor;
   console.log(sensor);
+  res.send(200);
+});
+
+app.get("/location", (req, res) => {
+  log("read location");
+  res.send(stringResponse(db.getLocation()));
+});
+
+app.post("/set_location", (req, res) => {
+  const loc = req.body.location;
+  log(`set location: ${JSON.stringify(loc)}`);
+  db.setLocation(loc);
   res.send(200);
 });
 
