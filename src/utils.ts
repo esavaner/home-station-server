@@ -1,3 +1,4 @@
+import { Controller, SensorRead } from "@esavaner/home-station";
 import fs from "fs";
 import moment from "moment";
 import DB from "./db";

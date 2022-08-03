@@ -1,8 +1,8 @@
 import { instance } from "./config";
 import { setupConfig } from "../utils";
 import { onecallexample } from "./onecallmock";
-import { OneCallModel } from "./onecall.model";
-import { Location } from "../db.model";
+import { OneCallModel } from "@esavaner/home-station";
+import { Location } from "@esavaner/home-station";
 
 const config = setupConfig("./config.json");
 export const getOneCall = (loc?: Location) =>

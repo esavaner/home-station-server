@@ -1,4 +1,4 @@
-import { OneCallModel } from "./onecall.model";
+import { OneCallModel } from "@esavaner/home-station";
 
 export const onecallexample: OneCallModel = {
   lat: 33.44,
@@ -1185,7 +1185,9 @@ export const onecallexample: OneCallModel = {
       ],
       clouds: 6,
       pop: 0.93,
-      rain: 7.59,
+      rain: {
+        "1h": 7.69,
+      },
       uvi: 1,
     },
     {
@@ -1215,7 +1217,9 @@ export const onecallexample: OneCallModel = {
       ],
       clouds: 100,
       pop: 0.93,
-      rain: 4.25,
+      rain: {
+        "1h": 7.69,
+      },
       uvi: 1,
     },
   ],
