@@ -31,7 +31,7 @@
     "typescript": "^4.7.4"
   },
   "dependencies": {
-    "@esavaner/home-station": "^0.0.8",
+    "@esavaner/home-station": "^0.0.12",
     "axios": "^0.27.2",
     "concurrently": "^7.2.2",
     "nodemon": "^2.0.16"

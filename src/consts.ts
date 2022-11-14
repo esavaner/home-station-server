@@ -1,7 +1,7 @@
 const PORT = 8080;
 const DB_FILE = "./db.json";
 const STATUS_THROTTLE = 5 * 60 * 1000;
-const CONTROLLER_THROTTLE = 5 * 60 * 1000;
+const CONTROLLER_THROTTLE = 60 * 1000;
 const ONECALL_THROTTLE = 15 * 60 * 1000;
 const W1_PATH = "/sys/bus/w1/devices";
 const DEFAULT_CLIENT = "http://localhost:3000";

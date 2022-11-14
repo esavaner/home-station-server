@@ -2,7 +2,7 @@ import express from "express";
 import DB from "./db";
 import { PORT, DB_FILE, DEFAULT_CLIENT } from "./consts";
 import { log } from "./utils";
-import { setupConfig, setupTimer, stringResponse } from "./utils";
+import { setupConfig, stringResponse } from "./utils";
 import { Controller, Location } from "@esavaner/home-station";
 
 const db = new DB(DB_FILE);
@@ -21,6 +21,7 @@ app.use((req, res, next) => {
     "Access-Control-Allow-Headers",
     "Origin, X-Requested-With, Content-Type, Accept"
   );
+  res.header("Access-Control-Allow-Methods", "GET, POST, OPTIONS, PUT, DELETE");
   next();
 });
 
@@ -61,9 +62,15 @@ app.delete("/location", (req, res) => {
 /*********************************************/
 /* controllers */
 
-app.get("/controller", (req, res) => {
+app.get("/controllers", (req, res) => {
   log("get controllers");
   res.send(stringResponse(db.getControllers()));
+});
+
+app.get("/controller", (req, res) => {
+  log("get controller");
+  const con_ip = req.query.controller_ip;
+  res.send(stringResponse(db.getController(con_ip ? (con_ip as string) : "")));
 });
 
 app.post("/controller", (req, res) => {
@@ -102,15 +109,3 @@ app.get("/controller_read", async (req, res) => {
 app.listen(PORT, () => {
   log(`Running on port ${PORT}`);
 });
-
-// app.get("/status", (req, res) => {
-//   log("read status");
-//   const st = db.getStatus();
-//   res.send(stringResponse(st.length > 0 ? st[0] : {}));
-// });
-//
-// app.post("/add_sensor", (req, res) => {
-//   const sensor = req.body.sensor;
-//   console.log(sensor);
-//   res.send(200);
-// });

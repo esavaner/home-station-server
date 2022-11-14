@@ -86,7 +86,7 @@ class DB {
 
   addController(con: Controller) {
     const index = this.controllers.findIndex((c) => c.ip === con.ip);
-    if (index < 0) {
+    if (index > -1) {
       throw "Controller existing";
     } else {
       try {
@@ -114,11 +114,15 @@ class DB {
     return this.controllers;
   }
 
+  getController(con_ip: string) {
+    return this.controllers.find((con) => con.ip === con_ip);
+  }
+
   /*********************************************/
   /* controller status */
 
   setControllerHistory(data: ControllerRead[]) {
-    this.controllerHistory = data;
+    this.controllerHistory = [...data];
     this.save();
   }
 
@@ -129,125 +133,37 @@ class DB {
       now - this.controllerHistory[0].time > CONTROLLER_THROTTLE
     ) {
       const promises = this.controllers.map(async (con) => {
-        const cTemp = await readTemp(con.ip);
-        const cRead = await readSensors(con);
+        let cTemp, cRead;
+        let errors = [];
+        try {
+          cTemp = await readTemp(con.ip);
+        } catch (e) {
+          errors.push(e);
+        }
+        try {
+          cRead = await readSensors(con);
+        } catch (e) {
+          errors.push(e);
+        }
+        console.log(errors);
         return {
           ip: con.ip,
           name: con.name,
           time: now,
           temp: cTemp,
-          sensors: cRead,
+          sensors: cRead ? cRead : [],
         };
       });
       const results = await Promise.allSettled(promises);
-      const reads = (
-        results.find((res) => res.status === "fulfilled") as
-          | PromiseFulfilledResult<ControllerRead[]>
-          | undefined
-      )?.value;
 
+      const reads = results
+        .filter((r_1) => r_1.status === "fulfilled")
+        // @ts-ignore
+        .map((r_2) => r_2.value);
       reads && this.setControllerHistory(reads);
     }
     return this.controllerHistory;
   }
-
-  // clearSensor(pin: number) {
-  //   const sens = new Gpio(pin, "in");
-  //   sens.writeSync(0);
-  // }
-
-  // readSensors(): SensorRead[] {
-  //   return this.sensors.map((sens: Sensor) => {
-  //     const sensorPin = new Gpio(sens.pin, "in");
-  //     return {
-  //       ...sens,
-  //       isOn: Boolean(sensorPin.readSync()),
-  //     };
-  //   });
-  // }
-
-  // setOneWires(): void {
-  //   const dirs = fs.readdirSync(W1_PATH);
-  //   for (let [index, dir] of Object.entries(dirs)) {
-  //     if (!dir.startsWith("28-")) continue;
-  //     if (this.onewires.find((el) => el.id === dir)) continue;
-  //     this.onewires.push({
-  //       id: dir,
-  //       description: `One Wire ${index}`,
-  //     });
-  //   }
-  //   this.save();
-  // }
-
-  // readOneWires(): OneWireRead[] {
-  //   if (this.onewires.length === 0) this.setOneWires();
-  //   const temps = this.onewires.map((wire) => {
-  //     try {
-  //       const w1 = fs.readFileSync(`${W1_PATH}/${wire.id}/w1_slave`, {
-  //         encoding: "utf-8",
-  //       });
-  //       const temp = parseInt(w1.split("t=")[1].replace("\n", "")) / 1000;
-  //       return {
-  //         ...wire,
-  //         temp,
-  //       };
-  //     } catch (e) {
-  //       return {
-  //         ...wire,
-  //         temp: null,
-  //       };
-  //     }
-  //   });
-
-  //   return temps;
-  // }
-
-  // getStatus(): StatusModel[] {
-  //   const now = Date.now();
-  //   if (
-  //     this.statusHistory.length === 0 ||
-  //     now - this.statusHistory[0].time > STATUS_THROTTLE
-  //   ) {
-  //     this.appendStatusHistory({
-  //       time: now,
-  //       sensors: this.readSensors(),
-  //       onewires: this.readOneWires(),
-  //     });
-  //   }
-  //   return this.getStatusHistory();
-  // }
-
-  // getStatusHistory() {
-  //   return this.statusHistory;
-  // }
-
-  // addSensor(sensor: Sensor) {
-  //   this.sensors.push(sensor);
-  //   const sens = new Gpio(sensor.pin, "in");
-  //   sens.writeSync(1);
-  //   this.save();
-  // }
-
-  // updateSensor(sensor: Sensor) {
-  //   const index = this.sensors.findIndex((sens) => (sensor.pin = sens.pin));
-  //   this.sensors[index] = sensor;
-  //   this.save();
-  // }
-
-  // deleteSensor(sensor: Sensor) {
-  //   const index = this.sensors.findIndex((sens) => (sensor.pin = sens.pin));
-  //   this.sensors.splice(index, 1);
-  //   this.clearSensor(sensor.pin);
-  //   this.save();
-  // }
-
-  // appendStatusHistory(data: StatusModel) {
-  //   this.statusHistory.push(data);
-  //   if (this.statusHistory.length > 1) {
-  //     this.statusHistory.shift();
-  //   }
-  //   this.save();
-  // }
 }
 
 export default DB;
